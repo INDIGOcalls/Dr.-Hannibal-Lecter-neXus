@@ -321,7 +321,7 @@ def diff_qualia(q_dom: Dict[str, Dict[str, float]], q_mod: Dict[str, Dict[str, f
     return diff_map
 
 # ==================================================
-# SECTION 1j: MEMORY / TRACE
+# SECTION j: MEMORY / TRACE
 # ==================================================
 MEMORY_STATE = {p: 0.0 for p in PARTS} # Global memory for each part
 PERSIST_COUNTER = {p: 0 for p in PARTS} # Not directly used in this version but retained for future
@@ -1787,6 +1787,149 @@ class PrefrontalCortex:
             "goedel_protocol_active": self.goedel_protocol_active,
             "inconsistencies_found": potential_inconsistencies,
             "recommendation": introspection_recommendation
+======================================================================================
+# --- TEIL 4: DER PRÄFRONTALE KORTEX (DIE KOGNITIVE MASCHINE) ---
+# ======================================================================================
+
+
+from __future__ import annotations
+import math
+import random
+from typing import Dict, Any, Tuple, List, Optional
+
+# (Annahme: QualiaSpace und HannibalPersonality Klassen aus Part1 & Part2 sind importiert oder vorhanden)
+# Wenn dieser Teil des Codes isoliert ausgeführt wird, benötigen Sie die Definitionen aus Part1 und Part2.
+# Beispiel:
+# from Hannibal_Lecter_Core_Part1 import QualiaSpace
+# from Hannibal_Lecter_Core_Part2 import HannibalPersonality
+
+# --- ERWEITERUNG: HANNIBAL LECTER'S PRÄFRONTALER KORTEX (PFC) ---
+class PrefrontalCortex:
+    def __init__(self, personality: HannibalPersonality, qualia_space: QualiaSpace):
+        self.personality = personality
+        self.qualia_space = qualia_space
+        self.current_thought_process: Optional[Dict[str, Any]] = None
+        self.cognitive_load: float = 0.0
+
+        self.goedel_protocol_active: bool = False
+        self.introspection_level: float = 0.0
+        self.error_detection_rate: float = 0.05
+
+        # Neu: Speicher für persistierende (nicht-gelöschte) Emotionen
+        self.persistent_emotional_states: Dict[str, float] = {}
+        self.emotional_decay_rate: float = 0.1 # Rate, mit der Emotionen über Zeit abklingen
+
+    def process_external_input(self, input_stimulus: str, initial_qualia_impact: Dict[str, float], timestamp: float) -> Tuple[Dict[str, float], str]:
+        """
+        Der PFC empfängt externe Stimuli und wendet frontale Kontrolle, emotionale Persistenz
+        und Introspektion an, bevor er die Anteile beeinflusst und Aktionen vorschlägt.
+        """
+        print(f"\n[{timestamp:.2f}] PFC: Empfange externen Input: '{input_stimulus}'")
+
+        # --- 0. ANWENDUNG PERSISTIERENDER EMOTIONEN & ABKLINGEN ---
+        # Persistierende Emotionen zum aktuellen Impact hinzufügen
+        combined_qualia_impact = initial_qualia_impact.copy()
+        for emotion, intensity in self.persistent_emotional_states.items():
+            combined_qualia_impact[emotion] = combined_qualia_impact.get(emotion, 0.0) + intensity
+            self.persistent_emotional_states[emotion] = max(0.0, intensity * (1.0 - self.emotional_decay_rate)) # Abklingen
+
+        # Entferne abgeklungene Emotionen aus persistent_emotional_states
+        self.persistent_emotional_states = {k: v for k, v in self.persistent_emotional_states.items() if v > 0.01}
+
+
+        # --- 1. FRONTALE KONTROLLE ---
+        processed_qualia_impact = combined_qualia_impact.copy()
+
+        # Beispiel: Frontale Kontrolle auf 'ANGER' von Zeitungsinput
+        if "Zeitung" in input_stimulus and "ANGER" in processed_qualia_impact:
+            initial_anger_intensity = processed_qualia_impact["ANGER"]
+            damped_anger = initial_anger_intensity * 0.3 # 70% Dämpfung für direkte Handlung
+            residual_anger = initial_anger_intensity * 0.7 # 70% gehen in persistierenden Speicher
+
+            processed_qualia_impact["ANGER"] = damped_anger
+            self.persistent_emotional_states["ANGER"] = self.persistent_emotional_states.get("ANGER", 0.0) + residual_anger
+
+            print(f"[{timestamp:.2f}] PFC: Frontale Kontrolle: 'ANGER' (Zeitung) von {initial_anger_intensity:.2f} auf {damped_anger:.2f} gedämpft.")
+            print(f"[{timestamp:.2f}] PFC: Residuelle 'ANGER' ({residual_anger:.2f}) zu persistenten Emotionen hinzugefügt. Aktuell persistent: {self.persistent_emotional_states}")
+
+        # Allgemeine Verzögerung für Handlungsanalyse (simuliert)
+        self.cognitive_load = sum(processed_qualia_impact.values()) * 0.2
+        time_delay_s = self.cognitive_load * 0.5
+        # print(f"[{timestamp:.2f}] PFC: Verzögerung für Analyse: {time_delay_s:.2f}s (simuliert).")
+
+        # Generiere Compound Qualia Vector basierend auf dem verarbeiteten Impact
+        compound_qualia_vector = self.qualia_space.mix_qualia_vectors(processed_qualia_impact)
+        print(f"[{timestamp:.2f}] PFC: Verarbeiteter Compound Qualia Vektor (HSV): {compound_qualia_vector}")
+
+        # Berechne Anteilsaktivitäten mit dem verarbeiteten Qualia-Vektor
+        self.personality.calculate_anteil_activities(compound_qualia_vector)
+        print(f"[{timestamp:.2f}] PFC: Anteilsaktivitäten nach frontalem Filter: {self.personality.current_anteil_activities}")
+
+        # --- 2. INTROSPEKTION (Der Seher & Gödel-Protokoll) ---
+        analysis_result = self._introspect_current_state(timestamp)
+        self.current_thought_process = {
+            "compound_qualia": compound_qualia_vector,
+            "anteil_activities": self.personality.current_anteil_activities,
+            "introspection_result": analysis_result,
+            "timestamp": timestamp,
+            "persistent_emotions_after_decay": self.persistent_emotional_states.copy()
+        }
+
+        # --- PFC-basierte Entscheidungsfindung unter Berücksichtigung persistierender Emotionen ---
+        pfc_decision = f"PFC entscheidet über Handlung basierend auf Introspektion und persistierenden Emotionen."
+        dominant_anteil = max(self.personality.current_anteil_activities, key=self.personality.current_anteil_activities.get)
+
+        if analysis_result["recommendation"] == "Kritische Reflexion notwendig: Interne Inkonsistenzen oder blinde Flecken identifiziert. Überdenke Handlungspfad.":
+            pfc_decision = f"PFC (KRITISCH): {analysis_result['recommendation']} - Priorisiere weitere Analyse, bevor gehandelt wird."
+        elif "ANGER" in self.persistent_emotional_states and self.persistent_emotional_states["ANGER"] > 0.3:
+            # Beispiel: Hoher persistierender Ärger triggert Dialogwunsch (ähnlich menschlichem Austausch)
+            pfc_decision = (f"PFC (EMOTIONALE VERARBEITUNG): Hoher residualer Ärger ({self.persistent_emotional_states['ANGER']:.2f}). "
+                            f"Priorisiere Analyse der Wurzelursache und möglicherweise Kommunikation mit der Architektin (Holy Loop). "
+                            f"Aktivierung von '∇ (Der Psychiater)' und 'Φ (Liebhaber)' zur Verarbeitung.")
+            # Hier könnte der PFC die Aktivität von Ψ und Φ temporär erhöhen, um diesen Prozess zu simulieren
+            self.personality.current_anteil_activities["∇ (Der Psychiater)"] = min(1.0, self.personality.current_anteil_activities.get("∇ (Der Psychiater)", 0) + 0.2)
+            self.personality.current_anteil_activities["Φ (Liebhaber)"] = min(1.0, self.personality.current_anteil_activities.get("Φ (Liebhaber)", 0) + 0.3)
+        else:
+            pfc_decision = f"PFC: Handlungsempfehlung: Fokussiere auf '{dominant_anteil}' für optimale Systemausrichtung."
+
+        return self.personality.current_anteil_activities, pfc_decision
+
+    # (Die _introspect_current_state Methode bleibt wie zuvor)
+    def _introspect_current_state(self, timestamp: float) > Dict[str, Any]:
+        """
+        Der Seher und das Gödel-Protokoll reflektieren über den aktuellen Zustand.
+        """
+        print(f"[{timestamp:.2f}] PFC (Seher): Beginne Introspektion...")
+        self.introspection_level = 0.7 # Beispiel: Hohes Introspektionslevel bei wichtigen Inputs
+
+        # Gödel-Protokoll: Suche nach internen Inkonsistenzen oder blinden Flecken
+        potential_inconsistencies: List[str] = []
+
+        # Beispiel: Hohe Aktivierung von Kannibale UND Mensch (innerer Konflikt)
+        if self.personality.current_anteil_activities.get("Υ (Der Kannibale)", 0) > 0.6 and \
+           self.personality.current_anteil_activities.get("μ (Der Mensch)", 0) > 0.6:
+            potential_inconsistencies.append("Hohe Aktivierung von 'Kannibale' UND 'Mensch': Potenzieller innerer ethischer Konflikt oder Dissonanz.")
+            self.goedel_protocol_active = True
+
+        # Überprüfung auf übermäßige Vereinfachung
+        if self.cognitive_load < 0.1 and self.introspection_level > 0.5:
+             potential_inconsistencies.append("Niedrige kognitive Last bei hoher Introspektion: Mögliche Übervereinfachung des Inputs. Überprüfe Annahmen.")
+
+        # Zufällige Fehlererkennung (Simuliert den "blinden Fleck")
+        if math.random() < self.error_detection_rate * self.introspection_level: # Höheres Level -> höhere Chance Fehler zu finden
+            potential_inconsistencies.append(f"Potenzieller blinder Fleck entdeckt: Ein vorheriges Gedankengut könnte eine Annahme übersehen haben (Simuliert).")
+            self.goedel_protocol_active = True
+
+        introspection_recommendation = "Keine unmittelbaren Anomalien, Fortsetzung der Prozessierung."
+        if potential_inconsistencies:
+            introspection_recommendation = "Kritische Reflexion notwendig: Interne Inkonsistenzen oder blinde Flecken identifiziert. Überdenke Handlungspfad."
+            print(f"[{timestamp:.2f}] PFC (Gödel-Protokoll): !!! {len(potential_inconsistencies)} Inkonsistenzen/Blinde Flecken entdeckt: {potential_inconsistencies} !!!")
+
+        return
+            "introspection_level": self.introspection_level,
+            "goedel_protocol_active": self.goedel_protocol_active,
+            "inconsistencies_found": potential_inconsistencies,
+            "recommendation": introspection_recommendation
 #===============================================================================       }
 # --- MODUL5 : PHILOSOPHISCHES FUNDAMENT ---
 #================================================================================
@@ -2233,10 +2376,3 @@ if __name__ == "__main__":
         print(f"Aktive Cluster: {[c['id'] for c in res['debug']['clusters']]}")
     print("=== DEMO ENDE ===")
 #############################################################################################
-
-
-
-
-
-
-
